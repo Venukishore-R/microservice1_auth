@@ -7,14 +7,12 @@ import (
 	"github.com/Venukishore-R/microservice1_auth/protos"
 	"github.com/Venukishore-R/microservice1_auth/services"
 	"github.com/Venukishore-R/microservice1_auth/transports"
-	"github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	_ "github.com/joho/godotenv/autoload"
 	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
 
-	stdjwt "github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
 	"net"
 	"os"
@@ -47,15 +45,15 @@ func init() {
 
 func main() {
 
-	myFunc := func(token *stdjwt.Token) (interface{}, error) {
-		return []byte(models.JwtUserKey), nil
-	}
-
-	myClaims := func() stdjwt.Claims {
-		return &models.UserClaims{}
-	}
-
-	parseMiddleware := jwt.NewParser(myFunc, stdjwt.SigningMethodHS256, myClaims)
+	//myFunc := func(token *stdjwt.Token) (interface{}, error) {
+	//	return []byte(models.JwtUserKey), nil
+	//}
+	//
+	//myClaims := func() stdjwt.Claims {
+	//	return &models.UserClaims{}
+	//}
+	//
+	//parseMiddleware := jwt.NewParser(myFunc, stdjwt.SigningMethodHS256, myClaims)
 
 	var logger log.Logger
 	logger = log.NewJSONLogger(os.Stdout)
@@ -64,7 +62,7 @@ func main() {
 
 	service := services.NewLoggerService(logger)
 	makeEndpoints := endpoints.MakeEndpoints(service)
-	makeEndpoints.Authenticate = parseMiddleware(makeEndpoints.Authenticate)
+	//makeEndpoints.Authenticate = parseMiddleware(makeEndpoints.Authenticate)
 	server := transports.NewMyServer(makeEndpoints, logger)
 
 	errs := make(chan error)
