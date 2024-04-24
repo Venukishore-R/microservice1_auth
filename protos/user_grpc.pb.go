@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	UserService_Register_FullMethodName = "/UserService/Register"
-	UserService_Login_FullMethodName    = "/UserService/Login"
+	UserService_Register_FullMethodName     = "/UserService/Register"
+	UserService_Login_FullMethodName        = "/UserService/Login"
+	UserService_Authenticate_FullMethodName = "/UserService/Authenticate"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -29,6 +30,7 @@ const (
 type UserServiceClient interface {
 	Register(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserRegResp, error)
 	Login(ctx context.Context, in *UserLoginReq, opts ...grpc.CallOption) (*UserLoginResp, error)
+	Authenticate(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AuthenticateUserResp, error)
 }
 
 type userServiceClient struct {
@@ -57,12 +59,22 @@ func (c *userServiceClient) Login(ctx context.Context, in *UserLoginReq, opts ..
 	return out, nil
 }
 
+func (c *userServiceClient) Authenticate(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AuthenticateUserResp, error) {
+	out := new(AuthenticateUserResp)
+	err := c.cc.Invoke(ctx, UserService_Authenticate_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
 	Register(context.Context, *User) (*UserRegResp, error)
 	Login(context.Context, *UserLoginReq) (*UserLoginResp, error)
+	Authenticate(context.Context, *Empty) (*AuthenticateUserResp, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -75,6 +87,9 @@ func (UnimplementedUserServiceServer) Register(context.Context, *User) (*UserReg
 }
 func (UnimplementedUserServiceServer) Login(context.Context, *UserLoginReq) (*UserLoginResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedUserServiceServer) Authenticate(context.Context, *Empty) (*AuthenticateUserResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -125,6 +140,24 @@ func _UserService_Login_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_Authenticate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).Authenticate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_Authenticate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).Authenticate(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -139,6 +172,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _UserService_Login_Handler,
+		},
+		{
+			MethodName: "Authenticate",
+			Handler:    _UserService_Authenticate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

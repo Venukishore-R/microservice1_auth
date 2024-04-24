@@ -22,3 +22,16 @@ type LoginResponse struct {
 	AccessToken  string
 	RefreshToken string
 }
+
+type AuthUserReq struct {
+	AccessToken string
+}
+
+type Empty struct{}
+
+type AuthUserResp struct {
+	Status int64
+	Name   string
+	Email  string
+	Phone  string
+}

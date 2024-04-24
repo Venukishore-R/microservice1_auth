@@ -3,10 +3,11 @@ syntax = "proto3";
 option go_package = "github.com/Venukishore-R/microservice1_auth/protos";
 
 message User {
-  string name = 1;
-  string email = 2;
-  string phone = 3;
-  string password = 4;
+  int64 id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+  string password = 5;
 }
 
 message UserRegResp {
@@ -25,7 +26,21 @@ message UserLoginResp {
   string refreshToken = 3;
 }
 
+message AuthenticateUserReq {
+  string AccessToken = 1;
+}
+
+message Empty {}
+
+message AuthenticateUserResp {
+  int64 status = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4 ;
+}
+
 service UserService {
   rpc Register(User) returns(UserRegResp);
   rpc Login(UserLoginReq) returns(UserLoginResp);
+  rpc Authenticate(Empty) returns(AuthenticateUserResp);
 }

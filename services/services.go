@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"github.com/Venukishore-R/microservice1_auth/models"
 	"github.com/go-kit/log"
-	"github.com/golang-jwt/jwt/v4"
+	stdjwt "github.com/golang-jwt/jwt/v4"
 	_ "github.com/joho/godotenv/autoload"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/go-kit/kit/auth/jwt"
 	"net/http"
 	"os"
 	"time"
@@ -22,6 +23,7 @@ type LoggerService struct {
 type Service interface {
 	Register(ctx context.Context, name, email, phone, password string) (int64, string, error)
 	Login(ctx context.Context, email, password string) (int64, string, string, error)
+	Authenticate(ctx context.Context) (int64, string, string, string, error)
 }
 
 func NewLoggerService(logger log.Logger) *LoggerService {
@@ -97,7 +99,7 @@ func (s *LoggerService) Login(ctx context.Context, email, password string) (int6
 		Name:  user.Name,
 		Email: user.Email,
 		Phone: user.Phone,
-		StandardClaims: jwt.StandardClaims{
+		StandardClaims: stdjwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
 			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
 		},
@@ -105,13 +107,13 @@ func (s *LoggerService) Login(ctx context.Context, email, password string) (int6
 
 	refreshClaims := &models.UserClaims{
 		Email: user.Email,
-		StandardClaims: jwt.StandardClaims{
+		StandardClaims: stdjwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
 			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 		},
 	}
 
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	accessToken := stdjwt.NewWithClaims(stdjwt.SigningMethodHS256, claims)
 	accessToken.Header["kid"] = "access_token"
 
 	newAccessToken, err := accessToken.SignedString(models.JwtUserKey)
@@ -120,7 +122,7 @@ func (s *LoggerService) Login(ctx context.Context, email, password string) (int6
 		return http.StatusInternalServerError, "", "", err
 	}
 
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
+	refreshToken := stdjwt.NewWithClaims(stdjwt.SigningMethodHS256, refreshClaims)
 	refreshToken.Header["kid"] = "refresh_token"
 
 	newRefreshToken, err := refreshToken.SignedString(models.JwtUserKey)
@@ -130,4 +132,12 @@ func (s *LoggerService) Login(ctx context.Context, email, password string) (int6
 	}
 
 	return http.StatusOK, newAccessToken, newRefreshToken, nil
+}
+
+func (s *LoggerService) Authenticate(ctx context.Context) (int64, string, string, string, error) {
+	key := ctx.Value(jwt.JWTClaimsContextKey)
+	claims := key.(*models.UserClaims)
+
+	s.logger.Log("claims", claims)
+	return http.StatusOK, claims.Name, claims.Email, claims.Phone, nil
 }
