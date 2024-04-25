@@ -17,7 +17,8 @@ type MyServer struct {
 }
 
 func NewMyServer(endpoints endpoints.Endpoints, logger log.Logger) MyServer {
-	options := grpc.ServerBefore(jwt.GRPCToContext())
+	options := []grpc.ServerOption{grpc.ServerBefore(jwt.GRPCToContext())}
+	//clientOption := grpc.ClientBefore(jwt.ContextToGRPC())
 
 	return MyServer{
 		register: grpc.NewServer(
@@ -34,7 +35,8 @@ func NewMyServer(endpoints endpoints.Endpoints, logger log.Logger) MyServer {
 			endpoints.Authenticate,
 			decodeAuthReq,
 			encodeAuthResp,
-			options,
+			//clientOption,
+			options...,
 		),
 	}
 }

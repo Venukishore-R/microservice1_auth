@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/go-kit/kit/auth/jwt"
+	slog "log"
 	"net/http"
 	"os"
 	"time"
@@ -135,9 +136,12 @@ func (s *LoggerService) Login(ctx context.Context, email, password string) (int6
 }
 
 func (s *LoggerService) Authenticate(ctx context.Context) (int64, string, string, string, error) {
+	slog.Print(ctx)
 	key := ctx.Value(jwt.JWTClaimsContextKey)
+	slog.Print("key", key)
 	claims := key.(*models.UserClaims)
-
 	s.logger.Log("claims", claims)
 	return http.StatusOK, claims.Name, claims.Email, claims.Phone, nil
+
+	//return http.StatusUnauthorized, "", "", "", nil
 }

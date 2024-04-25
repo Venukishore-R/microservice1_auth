@@ -43,4 +43,5 @@ service UserService {
   rpc Register(User) returns(UserRegResp);
   rpc Login(UserLoginReq) returns(UserLoginResp);
   rpc Authenticate(Empty) returns(AuthenticateUserResp);
+
 }
