@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/Venukishore-R/microservice1_auth/endpoints"
 	"github.com/Venukishore-R/microservice1_auth/models"
 	"github.com/Venukishore-R/microservice1_auth/protos"
@@ -15,11 +16,12 @@ import (
 	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
 
-	"gorm.io/gorm"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"gorm.io/gorm"
 )
 
 func init() {
@@ -65,6 +67,8 @@ func main() {
 	service := services.NewLoggerService(logger)
 	makeEndpoints := endpoints.MakeEndpoints(service)
 	makeEndpoints.Authenticate = parseMiddleware(makeEndpoints.Authenticate)
+	makeEndpoints.GenerateNewToken = parseMiddleware(makeEndpoints.GenerateNewToken)
+
 	server := transports.NewMyServer(makeEndpoints, logger)
 
 	errs := make(chan error)
@@ -89,5 +93,4 @@ func main() {
 	}()
 
 	logger.Log("exit", <-errs)
-
 }

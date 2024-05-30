@@ -1,8 +1,10 @@
+
 package services
 
 import (
 	"context"
 	"fmt"
+
 	"github.com/Venukishore-R/microservice1_auth/models"
 	"github.com/go-kit/log"
 	stdjwt "github.com/golang-jwt/jwt/v4"
@@ -10,11 +12,11 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/go-kit/kit/auth/jwt"
-	slog "log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/go-kit/kit/auth/jwt"
 )
 
 type LoggerService struct {
@@ -25,6 +27,7 @@ type Service interface {
 	Register(ctx context.Context, name, email, phone, password string) (int64, string, error)
 	Login(ctx context.Context, email, password string) (int64, string, string, error)
 	Authenticate(ctx context.Context) (int64, string, string, string, error)
+	GenerateNewToken(ctx context.Context) (string, error)
 }
 
 func NewLoggerService(logger log.Logger) *LoggerService {
@@ -136,12 +139,50 @@ func (s *LoggerService) Login(ctx context.Context, email, password string) (int6
 }
 
 func (s *LoggerService) Authenticate(ctx context.Context) (int64, string, string, string, error) {
-	slog.Print(ctx)
 	key := ctx.Value(jwt.JWTClaimsContextKey)
-	slog.Print("key", key)
 	claims := key.(*models.UserClaims)
-	s.logger.Log("claims", claims)
+	if claims == nil {
+		return http.StatusUnauthorized, "", "", "", fmt.Errorf("invalid token")
+	}
 	return http.StatusOK, claims.Name, claims.Email, claims.Phone, nil
+}
 
-	//return http.StatusUnauthorized, "", "", "", nil
+func (s *LoggerService) GenerateNewToken(ctx context.Context) (string, error) {
+	var user *models.User
+
+	db, err := ConnectDb()
+	if err != nil {
+		s.logger.Log("unable to connect to db", err)
+		return "", err
+	}
+
+	key := ctx.Value(jwt.JWTClaimsContextKey)
+	claims := key.(*models.UserClaims)
+
+	err = db.Model(&models.User{}).Where("email=?", claims.Email).First(&user).Error
+	s.logger.Log("user", user)
+	if err != nil {
+		s.logger.Log("no user", err)
+		return "", err
+	}
+
+	newClaims := &models.UserClaims{
+		Name:  user.Name,
+		Email: user.Email,
+		Phone: user.Phone,
+		StandardClaims: stdjwt.StandardClaims{
+			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
+		},
+	}
+	accessToken := stdjwt.NewWithClaims(stdjwt.SigningMethodHS256, newClaims)
+	accessToken.Header["kid"] = "access_token"
+
+	newAccessToken, err := accessToken.SignedString(models.JwtUserKey)
+	if err != nil {
+		s.logger.Log("unable to create access token", err)
+		return "", err
+	}
+
+	return newAccessToken, nil
 }

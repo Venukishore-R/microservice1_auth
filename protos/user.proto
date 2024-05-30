@@ -26,10 +26,6 @@ message UserLoginResp {
   string refreshToken = 3;
 }
 
-message AuthenticateUserReq {
-  string AccessToken = 1;
-}
-
 message Empty {}
 
 message AuthenticateUserResp {
@@ -39,9 +35,57 @@ message AuthenticateUserResp {
   string phone = 4 ;
 }
 
+message GenerateNewAccTokReq {
+  string RefreshToken = 1;
+}
+
+message GenerateNewAccTokResp {
+  string AccessToken = 1;
+}
+
 service UserService {
   rpc Register(User) returns(UserRegResp);
   rpc Login(UserLoginReq) returns(UserLoginResp);
   rpc Authenticate(Empty) returns(AuthenticateUserResp);
-
+  rpc GenerateNewToken(Empty) returns(GenerateNewAccTokResp);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

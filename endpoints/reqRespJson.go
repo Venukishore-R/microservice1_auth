@@ -35,3 +35,7 @@ type AuthUserResp struct {
 	Email  string
 	Phone  string
 }
+
+type GenerateNewTokResp struct {
+	AccessToken string
+}

@@ -7,16 +7,18 @@ import (
 )
 
 type Endpoints struct {
-	Register     endpoint.Endpoint
-	Login        endpoint.Endpoint
-	Authenticate endpoint.Endpoint
+	Register         endpoint.Endpoint
+	Login            endpoint.Endpoint
+	Authenticate     endpoint.Endpoint
+	GenerateNewToken endpoint.Endpoint
 }
 
 func MakeEndpoints(s services.Service) Endpoints {
 	return Endpoints{
-		Register:     makeRegisterEndpoint(s),
-		Login:        makeLoginEndpoint(s),
-		Authenticate: makeAuthenticateEndpoint(s),
+		Register:         makeRegisterEndpoint(s),
+		Login:            makeLoginEndpoint(s),
+		Authenticate:     makeAuthenticateEndpoint(s),
+		GenerateNewToken: makeGenerateNewToken(s),
 	}
 }
 
@@ -49,5 +51,15 @@ func makeAuthenticateEndpoint(s services.Service) endpoint.Endpoint {
 		_ = request.(Empty)
 		status, name, email, phone, err := s.Authenticate(ctx)
 		return AuthUserResp{Status: status, Name: name, Email: email, Phone: phone}, err
+	}
+}
+
+func makeGenerateNewToken(s services.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		_ = request.(Empty)
+		accessToken, err := s.GenerateNewToken(ctx)
+		return GenerateNewTokResp{
+			AccessToken: accessToken,
+		}, err
 	}
 }

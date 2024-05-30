@@ -2,17 +2,19 @@ package transports
 
 import (
 	"context"
+
 	"github.com/Venukishore-R/microservice1_auth/endpoints"
 	"github.com/Venukishore-R/microservice1_auth/protos"
 	"github.com/go-kit/kit/auth/jwt"
-	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport/grpc"
+	"github.com/go-kit/log"
 )
 
 type MyServer struct {
-	register     grpc.Handler
-	login        grpc.Handler
-	authenticate grpc.Handler
+	register          grpc.Handler
+	login             grpc.Handler
+	authenticate      grpc.Handler
+	generateNewAccTok grpc.Handler
 	protos.UnimplementedUserServiceServer
 }
 
@@ -36,6 +38,12 @@ func NewMyServer(endpoints endpoints.Endpoints, logger log.Logger) MyServer {
 			decodeAuthReq,
 			encodeAuthResp,
 			//clientOption,
+			options...,
+		),
+		generateNewAccTok: grpc.NewServer(
+			endpoints.GenerateNewToken,
+			decodeGenerateNewTokReq,
+			encodeGenerateNewTokResp,
 			options...,
 		),
 	}
@@ -102,4 +110,23 @@ func decodeAuthReq(_ context.Context, request interface{}) (interface{}, error) 
 func encodeAuthResp(_ context.Context, response interface{}) (interface{}, error) {
 	resp := response.(endpoints.AuthUserResp)
 	return &protos.AuthenticateUserResp{Status: resp.Status, Name: resp.Name, Email: resp.Email, Phone: resp.Phone}, nil
+}
+
+func (s *MyServer) GenerateNewToken(ctx context.Context, request *protos.Empty) (*protos.GenerateNewAccTokResp, error) {
+	_, resp, err := s.generateNewAccTok.ServeGRPC(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.(*protos.GenerateNewAccTokResp), nil
+}
+
+func decodeGenerateNewTokReq(_ context.Context, request interface{}) (interface{}, error) {
+	_ = request.(*protos.Empty)
+	return endpoints.Empty{}, nil
+}
+
+func encodeGenerateNewTokResp(_ context.Context, response interface{}) (interface{}, error) {
+	resp := response.(endpoints.GenerateNewTokResp)
+	return &protos.GenerateNewAccTokResp{AccessToken: resp.AccessToken}, nil
 }

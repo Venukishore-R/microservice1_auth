@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "microservice_auth1",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

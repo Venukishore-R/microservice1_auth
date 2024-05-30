@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	UserService_Register_FullMethodName     = "/UserService/Register"
-	UserService_Login_FullMethodName        = "/UserService/Login"
-	UserService_Authenticate_FullMethodName = "/UserService/Authenticate"
+	UserService_Register_FullMethodName         = "/UserService/Register"
+	UserService_Login_FullMethodName            = "/UserService/Login"
+	UserService_Authenticate_FullMethodName     = "/UserService/Authenticate"
+	UserService_GenerateNewToken_FullMethodName = "/UserService/GenerateNewToken"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -31,6 +32,7 @@ type UserServiceClient interface {
 	Register(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserRegResp, error)
 	Login(ctx context.Context, in *UserLoginReq, opts ...grpc.CallOption) (*UserLoginResp, error)
 	Authenticate(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AuthenticateUserResp, error)
+	GenerateNewToken(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*GenerateNewAccTokResp, error)
 }
 
 type userServiceClient struct {
@@ -68,6 +70,15 @@ func (c *userServiceClient) Authenticate(ctx context.Context, in *Empty, opts ..
 	return out, nil
 }
 
+func (c *userServiceClient) GenerateNewToken(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*GenerateNewAccTokResp, error) {
+	out := new(GenerateNewAccTokResp)
+	err := c.cc.Invoke(ctx, UserService_GenerateNewToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type UserServiceServer interface {
 	Register(context.Context, *User) (*UserRegResp, error)
 	Login(context.Context, *UserLoginReq) (*UserLoginResp, error)
 	Authenticate(context.Context, *Empty) (*AuthenticateUserResp, error)
+	GenerateNewToken(context.Context, *Empty) (*GenerateNewAccTokResp, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedUserServiceServer) Login(context.Context, *UserLoginReq) (*Us
 }
 func (UnimplementedUserServiceServer) Authenticate(context.Context, *Empty) (*AuthenticateUserResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
+}
+func (UnimplementedUserServiceServer) GenerateNewToken(context.Context, *Empty) (*GenerateNewAccTokResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateNewToken not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -158,6 +173,24 @@ func _UserService_Authenticate_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GenerateNewToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GenerateNewToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GenerateNewToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GenerateNewToken(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Authenticate",
 			Handler:    _UserService_Authenticate_Handler,
+		},
+		{
+			MethodName: "GenerateNewToken",
+			Handler:    _UserService_GenerateNewToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
